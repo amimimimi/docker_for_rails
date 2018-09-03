@@ -1,0 +1,64 @@
+version: '2'
+services:
+  rails: &app_base
+    build:
+      context: ../../dockerfiles/rails
+      args:
+        - APP_ROOT
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    volumes:
+      - ${SRC_DIR}:/app
+      - bundle:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - test-db
+    environment:
+      - DATABASE_HOST=db
+      - TEST_DATABASE_HOST=test-db
+      - DATABASE_PORT
+      - MYSQL_DATABASE
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - SMTP_ACCOUNT
+      - SMTP_PASSWORD
+      - RAILS_ENV=development
+      - TZ=Japan
+    tty: true
+    stdin_open: true
+
+  spring:
+    <<: *app_base
+    command: ["bundle", "exec", "spring", "server"]
+    ports: []
+    tty: false
+    stdin_open: false
+
+  db: &db
+    build:
+      context: ../../dockerfiles/mysql
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    volumes: 
+      - db-data:/var/lib/mysql
+      # - ./mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - TZ=Asia/Tokyo
+
+  test-db:
+    <<: *db
+    ports:
+      - ${DATABASE_PORT}
+    volumes: 
+      - test-db-data:/var/lib/mysql
+
+volumes:
+  db-data:
+  test-db-data:
+  bundle:

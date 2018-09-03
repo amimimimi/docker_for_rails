@@ -1,7 +1,1 @@
 .env
-compose_files/*
-!compose_files/rails_trainig/
-docker_files/*
-!docker_files/rails/
-Vagrantfile
-.vagrant
